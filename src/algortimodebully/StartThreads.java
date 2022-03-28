@@ -107,7 +107,6 @@ public class StartThreads {
                         if (coordinator.isActive()) {
                             coordinator.setActive(false);
                             System.out.println("Coordenador inativo ID: " + coordinator.getId());
-                            processList.remove(coordinator); //Para que o método random não coloque alguém inativado do processso
                         }
                     }
                 }
@@ -127,7 +126,6 @@ public class StartThreads {
                     Random r = new Random(processList.size());
                     Processo p = processList.get(r.nextInt(processList.size()));
                     p.setActive(false);
-                    processList.remove(p); //Para que o método random não coloque alguém inativado do processso
                     System.out.println("Inativado processo ID: " + p.getId());
                 }
             } catch (InterruptedException ex) {
