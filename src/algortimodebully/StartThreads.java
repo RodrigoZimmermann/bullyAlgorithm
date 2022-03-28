@@ -14,7 +14,8 @@ import java.util.Random;
  */
 public class StartThreads {
 
-    private static boolean isInElection = false;
+    private boolean isInElection = false;
+    private Processo coordinator = null;
     private ArrayList<Processo> processList = new ArrayList<>();
     private final NewProcess newProcess = new NewProcess();
     private final Thread newProcessThread = new Thread(newProcess);
@@ -28,8 +29,8 @@ public class StartThreads {
     public StartThreads() {
         newProcessThread.start();
         makeRequisitionThread.start();
-        //inactivateCoordinatorThread.start();
-        //disableRandomProcessThread.start();
+        inactivateCoordinatorThread.start();
+        disableRandomProcessThread.start();
     }
 
     public class NewProcess implements Runnable {
@@ -43,6 +44,7 @@ public class StartThreads {
                     Processo p = new Processo();
                     if (id == 0) {
                         p.setCoordinator(true);
+                        coordinator = p;
                     } else {
                         p.setCoordinator(false);
                     }
@@ -64,19 +66,14 @@ public class StartThreads {
             try {
                 while (true) {
                     Thread.sleep(25000);
-                    if (!processList.isEmpty()) {
+                    if (!processList.isEmpty() && coordinator != null) {
                         Processo coordinator = processList.get(0);
                         Random r = new Random();
                         Processo p = processList.get(r.nextInt(processList.size()));
-                        System.out.println("Requisição realizada: " + p.getId());
-                        for (int i = 0; i < processList.size(); i++) {
-                            if (processList.get(i).isCoordinator()) {
-                                coordinator = processList.get(i);
-                            }
-                        }
+                        System.out.println("Requisição realizada ID: " + p.getId());
                         if (!coordinator.isActive() && !isInElection) {
                             isInElection = true;
-                            System.out.println("Coordenador inativo. Inciando novo processo de eleição: " + p.getId());
+                            System.out.println("Coordenador inativo. Inciando novo processo de eleição ID: " + p.getId());
                             holdElection();
                         }
                     }
@@ -87,20 +84,12 @@ public class StartThreads {
         }
     }
 
-    private Processo makeRequisition() {
-
-        while (p.isCoordinator()) {
-            System.out.println("É o coordenador: " + p.getId());
-            makeRequisition();
-        }
-
-        return p;
-    }
-
     private void holdElection() throws InterruptedException {
         for (int i = processList.size() - 1; i >= 0; i--) {
-            if (!processList.get(i).isCoordinator()) {
+            if (!processList.get(i).isCoordinator() && processList.get(i).isActive()) {
+                coordinator.setCoordinator(false);
                 processList.get(i).setCoordinator(true);
+                coordinator = processList.get(i);
                 isInElection = false;
                 break;
             }
@@ -114,9 +103,11 @@ public class StartThreads {
             try {
                 while (true) {
                     Thread.sleep(100000);
-                    for (int i = 0; i < processList.size(); i++) {
-                        if (processList.get(i).isCoordinator()) {
-                            processList.get(i).setCoordinator(false);
+                    if (coordinator != null) {
+                        if (coordinator.isActive()) {
+                            coordinator.setActive(false);
+                            System.out.println("Coordenador inativo ID: " + coordinator.getId());
+                            processList.remove(coordinator); //Para que o método random não coloque alguém inativado do processso
                         }
                     }
                 }
@@ -133,14 +124,11 @@ public class StartThreads {
             try {
                 while (true) {
                     Thread.sleep(80000);
-                    Processo p = disableRandomProcess();
-                    if (!p.isActive()) {
-                        System.out.println("Já está inativo.ID: " + p.getId() + ".Buscando um novo processo para inativar");
-                    } else {
-                        p.setActive(false);
-                        System.out.println("Inativo processo " + p.getId());
-                    }
-
+                    Random r = new Random(processList.size());
+                    Processo p = processList.get(r.nextInt(processList.size()));
+                    p.setActive(false);
+                    processList.remove(p); //Para que o método random não coloque alguém inativado do processso
+                    System.out.println("Inativado processo ID: " + p.getId());
                 }
             } catch (InterruptedException ex) {
                 System.out.println("Exception: " + ex);
@@ -148,13 +136,4 @@ public class StartThreads {
         }
     }
 
-    private Processo disableRandomProcess() {
-        Random r = new Random(processList.size());
-        Processo p = processList.get(Integer.parseInt(r.toString()));
-        while (!p.isActive()) {
-            System.out.println("Já está inativo.ID: " + p.getId() + ".Buscando um novo processo para inativar");
-            disableRandomProcess();
-        }
-        return p;
-    }
 }
