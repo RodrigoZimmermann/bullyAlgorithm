@@ -10,7 +10,7 @@ import java.util.Random;
 
 /**
  *
- * @author Rodrigo Luís Zimmermann
+ * @author Rodrigo Luís Zimmermann e Matheus Felipe da Silva Sychocki
  */
 public class StartThreads {
 
@@ -42,12 +42,7 @@ public class StartThreads {
                     Thread.sleep(30000);
                     int id = processList.size();
                     Processo p = new Processo();
-                    if (id == 0) {
-                        p.setCoordinator(true);
-                        coordinator = p;
-                    } else {
-                        p.setCoordinator(false);
-                    }
+                    p.setCoordinator(false);
                     p.setId(id);
                     p.setActive(true);
                     processList.add(p);
@@ -66,14 +61,18 @@ public class StartThreads {
             try {
                 while (true) {
                     Thread.sleep(25000);
-                    if (!processList.isEmpty() && coordinator != null) {
-                        Processo coordinator = processList.get(0);
+                    if (!processList.isEmpty()) {
                         Random r = new Random();
-                        Processo p = processList.get(r.nextInt(processList.size()));
+                        Processo p = checkIsActiveAndNotCoordinator(r);
                         System.out.println("Requisição realizada ID: " + p.getId());
-                        if (!coordinator.isActive() && !isInElection) {
+                        if (coordinator == null) {
                             isInElection = true;
                             System.out.println("Coordenador inativo. Inciando novo processo de eleição ID: " + p.getId());
+                            holdElection();
+                        }
+                        if (!coordinator.isActive() && !isInElection) {
+                            isInElection = true;
+                            System.out.println("Coordenador está inativo. Inciando novo processo de eleição ID: " + p.getId());
                             holdElection();
                         }
                     }
@@ -87,9 +86,12 @@ public class StartThreads {
     private void holdElection() throws InterruptedException {
         for (int i = processList.size() - 1; i >= 0; i--) {
             if (!processList.get(i).isCoordinator() && processList.get(i).isActive()) {
-                coordinator.setCoordinator(false);
+                if (coordinator != null) {
+                    coordinator.setCoordinator(false);
+                }
                 processList.get(i).setCoordinator(true);
                 coordinator = processList.get(i);
+                System.out.println("Coordenador eleito ID: " + coordinator.getId());
                 isInElection = false;
                 break;
             }
@@ -123,8 +125,8 @@ public class StartThreads {
             try {
                 while (true) {
                     Thread.sleep(80000);
-                    Random r = new Random(processList.size());
-                    Processo p = processList.get(r.nextInt(processList.size()));
+                    Random r = new Random();
+                    Processo p = checkIsActiveAndNotCoordinator(r);
                     p.setActive(false);
                     System.out.println("Inativado processo ID: " + p.getId());
                 }
@@ -134,4 +136,11 @@ public class StartThreads {
         }
     }
 
+    public Processo checkIsActiveAndNotCoordinator(Random r) {
+        Processo p = processList.get(r.nextInt(processList.size()));
+        if (p.isActive() && !p.isCoordinator()) {
+            return p;
+        }
+        return checkIsActiveAndNotCoordinator(r);
+    }
 }

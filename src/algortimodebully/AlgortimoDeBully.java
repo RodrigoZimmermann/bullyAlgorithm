@@ -7,7 +7,7 @@ package algortimodebully;
 
 /**
  *
- * @author Rodrigo Luís Zimmermann
+ * @author Rodrigo Luís Zimmermann e Matheus Felipe da Silva Sychocki
  */
 public class AlgortimoDeBully {
 
