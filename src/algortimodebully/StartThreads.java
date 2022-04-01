@@ -136,7 +136,7 @@ public class StartThreads {
         }
     }
 
-    public Processo checkIsActiveAndNotCoordinator(Random r) {
+    private Processo checkIsActiveAndNotCoordinator(Random r) {
         Processo p = processList.get(r.nextInt(processList.size()));
         if (p.isActive() && !p.isCoordinator()) {
             return p;
