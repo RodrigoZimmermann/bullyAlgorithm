@@ -10,7 +10,7 @@ import java.util.Random;
 
 /**
  *
- * @author Rodrigo Luís Zimmermann e Matheus Felipe da Silva Sychocki
+ * @author Rodrigo Luís Zimmermann
  */
 public class StartThreads {
 
